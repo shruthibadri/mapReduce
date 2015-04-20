@@ -21,22 +21,22 @@ public class MaxElev {
 	    String line = value.toString();
 	    int station = Integer.parseInt(line.substring(4, 9));
             private Text dummykey = new Text();
-	    int lat;
+	    int lon;
             int elev = Integer.parseInt(line.substring(48, 51));
        		
-	    if (line.charAt(28) == '+') { 
-		    lat = Integer.parseInt(line.substring(29, 33));
+	    if (line.charAt(34) == '+') { 
+		    lon = Integer.parseInt(line.substring(35, 40));
 		} else {
-		    lat = Integer.parseInt(line.substring(28, 33));
+		    lon = Integer.parseInt(line.substring(34, 40));
 	    }
 
-            int value = (elev * 10^11 + station*10^5 + abs(lat)) * signum(lat);
+            int value = (elev + station*10^4 + abs(lon)*10^10) * signum(lon);
 		context.write(dummykey, new IntWritable (value));
 	    
 	}
     } // class MaxElevMapper
 
-    public static class MaxElevReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+    public static class MaxElevReducer extends Reducer<Text, IntWritable, Text, Text> {
 	@Override
 	public void reduce(Text key, Iterable<IntWritable> values,
 			   Context context)
@@ -44,17 +44,22 @@ public class MaxElev {
 	    
 	    int maxValue = Integer.MIN_VALUE;
             int maxStation;
+            int maxLon;
 	    for (IntWritable value : values) {
-            int elevation = abs(value.get()/10^11);
-            int statlat = value.get()%10^11;     
+            int val = value.get();
+            int lon = val/10^10;
+            int station = abs(val%10^10)/10^4;  
+            int elevation = val%10^4   
 
             maxValue = Math.max(maxValue, elevation);
             if maxValue == elevation{
-		maxStation = statlat;
+		maxStation = station;
+                maxLat = lat;
              }
 	    }
            
-	    context.write(key, new IntWritable(maxStation));
+            String a = "The station number is " + maxStation + ", which is at latitude "  + maxLatitude; 
+	    context.write(key, new Text(a));
 	}
     } // class Max Elev Reducer
 

@@ -11,21 +11,23 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
-public class MaxElev {
+public class EastWest {
 
     
-    public static class MaxElevMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+    public static class EastWestMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 	
 	@Override
 	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-	    String line = value.toString();
-	    int station = Integer.parseInt(line.substring(4, 9));
-            private Text dummykey = new Text();
-	    int elevation;		
+	    int maxElevLat = 12345;  
+            String line = value.toString();
+	    int station = Integer.parseInt(line.substring(4, 9))
+                      
+	    int lat;		
+	 	
 	    if (line.charAt(28) == '+') { 
-		    elevation = Integer.parseInt(line.substring(29, 33));
+		    lat = Integer.parseInt(line.substring(29, 33));
 		} else {
-		    elevation = Integer.parseInt(line.substring(28, 33));
+		    lat = Integer.parseInt(line.substring(28, 33));
 	    }
 
             int value = (abs(elevation) * 1000000 + station) * signum(elevation);
