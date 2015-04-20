@@ -49,16 +49,16 @@ public class MaxElev {
             int val = value.get();
             int lon = val/10^10;
             int station = abs(val%10^10)/10^4;  
-            int elevation = val%10^4   
+            int elevation = val%10^4;   
 
             maxValue = Math.max(maxValue, elevation);
             if maxValue == elevation{
 		maxStation = station;
-                maxLat = lat;
+                maxLon = lon;
              }
 	    }
            
-            String a = "The station number is " + maxStation + ", which is at latitude "  + maxLatitude; 
+            String a = "The station number is " + maxStation + ", which is at longtitude "  + maxLon; 
 	    context.write(key, new Text(a));
 	}
     } // class Max Elev Reducer
