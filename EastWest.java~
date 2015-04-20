@@ -14,7 +14,7 @@ import org.apache.hadoop.util.ToolRunner;
 public class EastWest {
 
     
-    public static class EastWestMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+    public static class EastWestMapper extends Mapper<LongWritable, Text, IntWritable, IntWritable> {
 	
 	@Override
 	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -46,36 +46,53 @@ public class EastWest {
 
 
             int value = (station + abs(lon)*10^6) * signum(lat);
-		context.write(eastwest, new IntWritable (value));
+		context.write(new IntWritable (eastwest), new IntWritable (value));
 	    
 	}
-    } // class MaxElevMapper
+    } // class MaxElevMapper (still in progress - doing parts 2 and 3 together)
 
     public static class MaxElevReducer extends Reducer<Text, IntWritable, Text, Text> {
 	@Override
-	public void reduce(Text key, Iterable<IntWritable> values,
+	public void reduce(IntWritable key, Iterable<IntWritable> values,
 			   Context context)
 	    throws IOException, InterruptedException {
 	    
-	    int maxValue = Integer.MIN_VALUE;
+             int eastwest = key.get();
+             if (eastwest == 1) or (eastwest == -1) {
+ 
+	    int maxLat = Integer.MIN_VALUE;
             int maxStation;
-            int maxLon;
-	    for (IntWritable value : values) {
-            int val = value.get();
-            int lon = val/10^10;
-            int station = abs(val%10^10)/10^4;  
-            int elevation = val%10^4l;   
+            int total = 0;
+           
+           
 
-            maxValue = Math.max(maxValue, elevation);
-            if maxValue == elevation{
+	    for (IntWritable value : values) {
+            total ++;
+            if (eastwest ==1){
+            int val = value.get();
+            int lat = val/10^6;
+            int station = abs(val%10^6);  
+     
+             
+            maxValue = Math.max(maxLat, lat);
+            if maxLat == lat{
 		maxStation = station;
-                maxLat = lat;
+                
              }
 	    }
-           
-            String a = "The station number is " + maxStation + ", which is at latitude "  + maxLatitude; 
+           }
+
+            String helper = "west";
+            String helper2 = ''
+            if (eastwest ==1){
+            helper = 'east';
+            helper2 = 'The northermost station of these is' + station
+            }  
+            
+            String a = "The number of stations on the " + helper + " of the highest station is " + total + "." + helper2; 
 	    context.write(key, new Text(a));
 	}
+       }
     } // class Max Elev Reducer
 
 
