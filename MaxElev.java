@@ -13,9 +13,9 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class MaxElev {
 
-    
+
     public static class MaxElevMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-	
+
 	@Override
 	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 	    String line = value.toString();
@@ -23,8 +23,8 @@ public class MaxElev {
             private Text dummykey = new Text();
 	    int lon;
             int elev = Integer.parseInt(line.substring(48, 51));
-       		
-	    if (line.charAt(34) == '+') { 
+
+	    if (line.charAt(34) == '+') {
 		    lon = Integer.parseInt(line.substring(35, 40));
 		} else {
 		    lon = Integer.parseInt(line.substring(34, 40));
@@ -32,7 +32,7 @@ public class MaxElev {
 
             int value = (elev + station*10^4 + abs(lon)*10^10) * signum(lon);
 		context.write(dummykey, new IntWritable (value));
-	    
+
 	}
     } // class MaxElevMapper
 
@@ -41,15 +41,15 @@ public class MaxElev {
 	public void reduce(Text key, Iterable<IntWritable> values,
 			   Context context)
 	    throws IOException, InterruptedException {
-	    
+
 	    int maxValue = Integer.MIN_VALUE;
             int maxStation;
             int maxLon;
 	    for (IntWritable value : values) {
             int val = value.get();
             int lon = val/10^10;
-            int station = abs(val%10^10)/10^4;  
-            int elevation = val%10^4;   
+            int station = abs(val%10^10)/10^4;
+            int elevation = val%10^4;
 
             maxValue = Math.max(maxValue, elevation);
             if maxValue == elevation{
@@ -57,8 +57,8 @@ public class MaxElev {
                 maxLon = lon;
              }
 	    }
-           
-            String a = "The station number is " + maxStation + ", which is at longtitude "  + maxLon; 
+
+            String a = "The station number is " + maxStation + ", which is at longtitude "  + maxLon;
 	    context.write(key, new Text(a));
 	}
     } // class Max Elev Reducer
@@ -78,5 +78,5 @@ public class MaxElev {
 	FileOutputFormat.setOutputPath(job, new Path(args[1]));
 	System.exit(job.waitForCompletion(true) ? 0 : 1);
     } //main
-    
+
 } // class MaxTemp_v2
