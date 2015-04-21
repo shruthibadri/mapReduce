@@ -1,8 +1,9 @@
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -13,52 +14,57 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class MaxElev {
 
-    public static class MaxElevMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-
+    public static class MaxElevMapper
+        extends Mapper<LongWritable, Text, Text, ArrayWritable> {
         @Override
-        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        public void map(LongWritable key, Text value, Context context)
+            throws IOException, InterruptedException {
             String line = value.toString();
+
             int station = Integer.parseInt(line.substring(4, 10));
-            private Text dummykey = new Text();
-            int lon;
             int elev = Integer.parseInt(line.substring(47, 51));
+            int longitude = Integer.parseInt(line.substring(34, 41));
 
-            if (line.charAt(34) == '+') {
-                lon = Integer.parseInt(line.substring(35, 41));
-            } else {
-                lon = Integer.parseInt(line.substring(34, 41));
-            }
+            Text dummykey = new Text();
+            ArrayWritable value =
+                new ArrayWritable(IntWritable,
+                                  {new IntWritable(station),
+                                   new IntWritable(elev),
+                                   new IntWritable(longitude)});
 
-            int value = (elev + station*10^4 + abs(lon)*10^10) * signum(lon);
-            context.write(dummykey, new IntWritable (value));
-
+            context.write(dummykey, value);
         }
     } // class MaxElevMapper
 
-    public static class MaxElevReducer extends Reducer<Text, IntWritable, Text, Text> {
+    public static class MaxElevReducer
+        extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {
         @Override
-        public void reduce(Text key, Iterable<IntWritable> values,
+        public void reduce(Text key, Iterable<ArrayWritable> values,
                            Context context)
             throws IOException, InterruptedException {
 
-            int maxValue = Integer.MIN_VALUE;
+            int maxElev = Integer.MIN_VALUE;
             int maxStation;
-            int maxLon;
-            for (IntWritable value : values) {
-                int val = value.get();
-                int lon = val/10^10;
-                int station = abs(val%10^10)/10^4;
-                int elevation = val%10^4;
+            int maxLongitude;
+            for (ArrayWritable value : values) {
+                Writable[] array = value.get();
+                int station = array[0].get();
+                int elev = array[1].get();
+                int longitude = array[2].get();
 
-                maxValue = Math.max(maxValue, elevation);
-                if maxValue == elevation{
-                        maxStation = station;
-                        maxLon = lon;
-                    }
+                if (elev > maxElev) {
+                    maxElev = elev;
+                    maxStation = station;
+                    maxLongitude = longitude;
+                }
             }
 
-            String a = "The station number is " + maxStation + ", which is at longtitude "  + maxLon;
-            context.write(key, new Text(a));
+            ArrayWritable value =
+                new ArrayWritable(
+                                  IntWritable,
+                                  {new IntWritable(maxStation),
+                                   new IntWritable(maxElev)});
+            context.write(key, value);
         }
     } // class Max Elev Reducer
 
