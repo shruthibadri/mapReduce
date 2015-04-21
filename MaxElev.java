@@ -18,15 +18,15 @@ public class MaxElev {
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
-            int station = Integer.parseInt(line.substring(4, 9));
+            int station = Integer.parseInt(line.substring(4, 10));
             private Text dummykey = new Text();
             int lon;
-            int elev = Integer.parseInt(line.substring(48, 51));
+            int elev = Integer.parseInt(line.substring(47, 51));
 
             if (line.charAt(34) == '+') {
-                lon = Integer.parseInt(line.substring(35, 40));
+                lon = Integer.parseInt(line.substring(35, 41));
             } else {
-                lon = Integer.parseInt(line.substring(34, 40));
+                lon = Integer.parseInt(line.substring(34, 41));
             }
 
             int value = (elev + station*10^4 + abs(lon)*10^10) * signum(lon);
