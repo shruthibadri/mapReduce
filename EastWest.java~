@@ -79,9 +79,9 @@ public class EastWest {
             
             String a = "The number of stations on the " + helper + " of the highest station is " + total + "." + helper2; 
 	    context.write(key, new Text(a));
-	
+	}
        }
-       } 
+    } 
 
 
     public static void main(String[] args) throws Exception {
