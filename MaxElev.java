@@ -22,8 +22,8 @@ public class MaxElev {
             String line = value.toString();
 
             int station = Integer.parseInt(line.substring(4, 10));
-            int elev = Integer.parseInt(line.substring(47, 51));
-            int longitude = Integer.parseInt(line.substring(34, 41));
+            int elev = Integer.parseInt(line.substring(46, 51));
+            int longitude = Integer.parseInt(line.substring(33, 41));
 
             Text dummykey = new Text();
             ArrayWritable value =
