@@ -2,8 +2,8 @@
 
 all: MaxElev.jar
 
-MaxElev.jar: MaxElev.class
+%.jar: %.class %$%Mapper.class %$%Reducer.class
 	jar cf $@ $<
 
-MaxElev.class: MaxElev.java
+%.class %$%Mapper.class %$%Reducer.class: %.java
 	hadoop com.sun.tools.javac.Main $<
