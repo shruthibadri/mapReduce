@@ -11,91 +11,113 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
-
+import java.util.HashSet;
 
 public class EastWest {
 
-	public static class EastWestMapper
-		extends Mapper<LongWritable, Text, IntWritable, ArrayWritable> {
-		@Override
-	   	public void map(LongWritable key, Text value, Context context) 
-         	throws IOException, InterruptedException {
-	    	
-			int compare = 12345; //longtitude of max elev station - this needs to be updated
+    public static class IntArrayWritable extends ArrayWritable {
+        public IntArrayWritable() {
+            super(IntWritable.class);
+        }
+
+        public IntArrayWritable(int[] ints) {
+            super(IntWritable.class);
+            IntWritable[] values = new IntWritable[ints.length];
+            for (int i = 0; i < ints.length; i++) {
+                values[i] = new IntWritable(ints[i]);
+            }
+            set(values);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("[ ");
+
+            for (String s : super.toStrings()) {
+                sb.append(s).append(" ");
+            }
+
+            sb.append(" ]");
+            return sb.toString();
+        }
+    }
+
+    public static class EastWestMapper
+        extends Mapper<LongWritable, Text, IntWritable, IntArrayWritable> {
+
+        @Override
+        public void map(LongWritable key, Text value, Context context)
+            throws IOException, InterruptedException {
+
+            // XXX longtitude of highest station; this needs to be updated
+            int compare = 12345;
             String line = value.toString();
-	       
+
             int station = Integer.parseInt(line.substring(4, 10));
-            int longitude = line.charAt(34) == '+' ? Integer.parseInt(line.substring(35, 40)) : Integer.parseInt(line.substring(34, 40));
-            int key = 0;
-		    
-				if (longitude != compare){
-					key = longitude > compare ? 1 : -1;
-				}
-           
-			int latitude = line.charAt(28) == '+' ? Integer.parseInt(line.substring(29, 34)) : Integer.parseInt(line.substring(28, 34));
-	 	    
-            ArrayWritable value =
-            	new ArrayWritable(IntWritable,
-		                          {new IntWritable(station),
-		                           new IntWritable(latitude)});
+            int longitude = line.charAt(34) == '+' ?
+                Integer.parseInt(line.substring(35, 41)) :
+                Integer.parseInt(line.substring(34, 41));
 
-			context.write(new IntWritable (key), value);
-	    
-	}
-    } 
+            if (longitude != compare) {
+                int intkey = longitude > compare ? 1 : -1;
+                int latitude = line.charAt(28) == '+' ?
+                    Integer.parseInt(line.substring(29, 34)) :
+                    Integer.parseInt(line.substring(28, 34));
 
+                context.write(new IntWritable(intkey),
+                              new IntArrayWritable(new int[]{station, latitude}));
+            }
+        }
+    }
 
-    public static class MaxElevReducer extends Reducer<Text, IntWritable, Text, Text> {
-	@Override
-		public void reduce(IntWritable key, Iterable<IntWritable> values,
-	    					Context context)
-	    	throws IOException, InterruptedException {
-			int key = key.get();
-	        
-			if (key !=0) {
- 
-				int maxLat = Integer.MIN_VALUE;
-				int maxStation;
-				int total = 0;
-	       
-				for (ArrayWritable value : values) {
-					int station = array[0].get();
-                    int latitude = array[1].get();				    
-					total ++; //assuming each station shows up only once, otherwise this will have to change. 
-				    
-                    if (key ==1) && (maxLat > latitude){
-						maxStation = station;
-				    }
-				}
-			}
-           
+    public static class EastWestReducer
+        extends Reducer<IntWritable, IntArrayWritable, IntWritable, IntWritable> {
 
-            String helper = "west";
-            String helper2 = ''
-            if (eastwest ==1){
-            helper = 'east';
-            helper2 = 'The northermost station of these is' + station
-            }  
-            
-            String a = "The number of stations on the " + helper + " of the highest station is " + total + "." + helper2; 
-	    context.write(key, new Text(a));
-	
-       }
-       } 
+        @Override
+        public void reduce(IntWritable key, Iterable<IntArrayWritable> values,
+                           Context context)
+            throws IOException, InterruptedException {
 
+            int intkey = key.get();
+            int maxLat = Integer.MIN_VALUE;
+            int maxStation = 0;
+            HashSet<Integer> seen = new HashSet<Integer>();
+
+            for (IntArrayWritable value : values) {
+                int station = array[0].get();
+                int latitude = array[1].get();
+                seen.add(station);
+
+                // If station is on east and more north
+                if ((intkey == 1) && (latitude > maxLat)) {
+                    maxStation = station;
+                    maxLat = latitude;
+                }
+            }
+
+            // Write how many seen on each side
+            context.write(key, new IntWritable(seen.size()));
+
+            // Write northenmost station info
+            if (key == 1) {
+                context.write(new IntWritable(2), new IntWritable(maxStation));
+                context.write(new IntWritable(3), new IntWritable(maxLat));
+            }
+        }
+    }
 
     public static void main(String[] args) throws Exception {
-	Configuration conf = new Configuration();
-	Job job = Job.getInstance(conf, "max temp");
-	job.setJarByClass(MaxElevclass);
-	job.setMapperClass(MaxElevMapper.class);
-	job.setReducerClass(MaxElevReducer.class);
-	job.setNumReduceTasks(2); 
-	job.setOutputKeyClass(Text.class);
-	job.setOutputValueClass(IntWritable.class);
-	FileInputFormat.addInputPath(job, new Path(args[0]));
-	FileOutputFormat.setOutputPath(job, new Path(args[1]));
-	System.exit(job.waitForCompletion(true) ? 0 : 1);
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "max temp");
+        job.setJarByClass(EastWest.class);
+        job.setMapperClass(EastWestMapper.class);
+        job.setReducerClass(EastWestReducer.class);
+        job.setNumReduceTasks(2);
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(IntWritable.class);
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
-    
+
 } // class MaxTemp_v2
