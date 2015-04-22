@@ -15,8 +15,35 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class MaxElev {
 
+    public static class IntArrayWritable extends ArrayWritable {
+        public IntArrayWritable() {
+            super(IntWritable.class);
+        }
+
+        public IntArrayWritable(int[] ints) {
+            super(IntWritable.class);
+            IntWritable[] values = new IntWritable[ints.length];
+            for (int i = 0; i < ints.length; i++) {
+                values[i] = new IntWritable(ints[i]);
+            }
+            set(values);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("[ ");
+
+            for (String s : super.toStrings()) {
+                sb.append(s).append(" ");
+            }
+
+            sb.append(" ]");
+            return sb.toString();
+        }
+    }
+
     public static class MaxElevMapper
-        extends Mapper<LongWritable, Text, Text, ArrayWritable> {
+        extends Mapper<LongWritable, Text, Text, IntArrayWritable> {
         @Override
         public void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
@@ -33,30 +60,25 @@ public class MaxElev {
             }
 
             Text dummykey = new Text();
-            ArrayWritable out_value =
-                new ArrayWritable(IntWritable.class,
-                                  new IntWritable[]{
-                                      new IntWritable(station),
-                                      new IntWritable(elev),
-                                      new IntWritable(longitude),
-                                  });
+            IntArrayWritable out_value =
+                new IntArrayWritable(new int[]{station, elev, longitude});
 
             context.write(dummykey, out_value);
         }
     }
 
     public static class MaxElevReducer
-        extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {
+        extends Reducer<Text, IntArrayWritable, Text, IntArrayWritable> {
         @Override
-        public void reduce(Text key, Iterable<ArrayWritable> values,
+        public void reduce(Text key, Iterable<IntArrayWritable> values,
                            Context context)
             throws IOException, InterruptedException {
 
             int maxElev = Integer.MIN_VALUE;
             int maxStation = 0;
             int maxLongitude = 0;
-            for (ArrayWritable value : values) {
-                IntWritable[] array = (IntWritable[])value.get();
+            for (IntArrayWritable value : values) {
+                IntWritable[] array = (IntWritable[])value.toArray();
                 int station = array[0].get();
                 int elev = array[1].get();
                 int longitude = array[2].get();
@@ -68,12 +90,8 @@ public class MaxElev {
                 }
             }
 
-            ArrayWritable value =
-                new ArrayWritable(IntWritable.class,
-                                  new IntWritable[]{
-                                      new IntWritable(maxStation),
-                                      new IntWritable(maxElev),
-                                  });
+            IntArrayWritable value =
+                new IntArrayWritable(new int[]{maxStation, maxElev});
             context.write(key, value);
         }
     }
@@ -86,7 +104,7 @@ public class MaxElev {
         job.setReducerClass(MaxElevReducer.class);
         job.setNumReduceTasks(1);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(ArrayWritable.class);
+        job.setOutputValueClass(IntArrayWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
