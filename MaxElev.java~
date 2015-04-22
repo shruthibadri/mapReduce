@@ -24,23 +24,24 @@ public class MaxElev {
             int station = Integer.parseInt(line.substring(4, 10));
             int elev = Integer.parseInt(line.substring(46, 51));
             int longitude;
-            if (line.charAt(34) == '+') {
-                longitude = Integer.parseInt(line.substring(35, 41));
-            }
+            
+            if (line.charAt(34) == '+') { 
+            	longitude = Integer.parseInt(line.substring(35, 41));
+	    	} 
             else {
-                longitude = Integer.parseInt(line.substring(34, 41));
-            }
+			longitude = Integer.parseInt(line.substring(34, 41));
+	    	}
 
             Text dummykey = new Text();
-            IntWritable[] value_array = new IntWritable[3];
-            value_array[0] = new IntWritable(station);
-            value_array[1] = new IntWritable(elev);
-            value_array[2] = new IntWritable(longitude);
-            ArrayWritable value = new ArrayWritable(IntWritable, value_array);
+            ArrayWritable value =
+                new ArrayWritable(IntWritable,
+                                  {new IntWritable(station),
+                                   new IntWritable(elev),
+                                   new IntWritable(longitude)});
 
             context.write(dummykey, value);
         }
-    }
+    } 
 
 
 
@@ -74,7 +75,7 @@ public class MaxElev {
                                    new IntWritable(maxElev)});
             context.write(key, value);
         }
-    }
+    } // class Max Elev Reducer
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
@@ -82,12 +83,12 @@ public class MaxElev {
         job.setJarByClass(MaxElevclass);
         job.setMapperClass(MaxElevMapper.class);
         job.setReducerClass(MaxElevReducer.class);
-        job.setNumReduceTasks(1);
+        job.setNumReduceTasks(1); 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
-    }
+    } //main
 
-}
+} // class MaxTemp_v2
