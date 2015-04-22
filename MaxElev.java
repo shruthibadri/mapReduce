@@ -22,7 +22,12 @@ public class MaxElev {
             String line = value.toString();
 
             int station = Integer.parseInt(line.substring(4, 10));
-            int elev = Integer.parseInt(line.substring(47, 51));
+            int elev;
+            if (line.charAt(47) == '+') {
+                elev = Integer.parseInt(line.substring(48, 51));
+            } else {
+                elev = Integer.parseInt(line.substring(47, 51));
+            }
             int longitude = Integer.parseInt(line.substring(34, 41));
 
             Text dummykey = new Text();
