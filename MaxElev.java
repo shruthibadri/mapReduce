@@ -31,11 +31,11 @@ public class MaxElev {
             int longitude = Integer.parseInt(line.substring(34, 41));
 
             Text dummykey = new Text();
-            ArrayWritable value =
-                new ArrayWritable(IntWritable,
-                                  {new IntWritable(station),
-                                   new IntWritable(elev),
-                                   new IntWritable(longitude)});
+            IntWritable[] value_array = new IntWritable[3];
+            value_array[0] = new IntWritable(station);
+            value_array[1] = new IntWritable(elev);
+            value_array[2] = new IntWritable(longitude);
+            ArrayWritable value = new ArrayWritable(IntWritable, value_array);
 
             context.write(dummykey, value);
         }
