@@ -1,0 +1,4 @@
+#!/bin/bash
+# Example usage: run MaxElev /user/hue/input /user/hue/output
+
+hadoop jar $1.jar $1 $2 $3
