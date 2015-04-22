@@ -1,9 +1,18 @@
-.PHONY: all
+.PHONY: all clean
 
 all: MaxElev.jar
 
-%.jar: %.class %$$$%Mapper.class %$$$%Reducer.class
-	jar cf $@ $^
+clean:
+	rm *.class *.jar
 
-%.class %$$$%Mapper.class %$$$%Reducer.class: %.java
-	hadoop com.sun.tools.javac.Main $<
+define make_rule
+
+$(1).jar: $(1).class
+	jar cf $$@ $(1)*.class
+
+$(1).class: $(1).java
+	hadoop com.sun.tools.javac.Main $$<
+
+endef
+
+$(foreach i, MaxElev, $(eval $(call make_rule,$(i))))
