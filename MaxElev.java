@@ -4,6 +4,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.ArrayWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -32,17 +33,17 @@ public class MaxElev {
             }
 
             Text dummykey = new Text();
-            IntWritable[] value_array = new IntWritable[3];
-            value_array[0] = new IntWritable(station);
-            value_array[1] = new IntWritable(elev);
-            value_array[2] = new IntWritable(longitude);
-            ArrayWritable value = new ArrayWritable(IntWritable, value_array);
+            ArrayWritable out_value =
+                new ArrayWritable(IntWritable.class,
+                                  new IntWritable[]{
+                                      new IntWritable(station),
+                                      new IntWritable(elev),
+                                      new IntWritable(longitude),
+                                  });
 
-            context.write(dummykey, value);
+            context.write(dummykey, out_value);
         }
     }
-
-
 
     public static class MaxElevReducer
         extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {
@@ -52,10 +53,10 @@ public class MaxElev {
             throws IOException, InterruptedException {
 
             int maxElev = Integer.MIN_VALUE;
-            int maxStation;
-            int maxLongitude;
+            int maxStation = 0;
+            int maxLongitude = 0;
             for (ArrayWritable value : values) {
-                Writable[] array = value.get();
+                IntWritable[] array = (IntWritable[])value.get();
                 int station = array[0].get();
                 int elev = array[1].get();
                 int longitude = array[2].get();
@@ -68,10 +69,11 @@ public class MaxElev {
             }
 
             ArrayWritable value =
-                new ArrayWritable(
-                                  IntWritable,
-                                  {new IntWritable(maxStation),
-                                   new IntWritable(maxElev)});
+                new ArrayWritable(IntWritable.class,
+                                  new IntWritable[]{
+                                      new IntWritable(maxStation),
+                                      new IntWritable(maxElev),
+                                  });
             context.write(key, value);
         }
     }
@@ -79,7 +81,7 @@ public class MaxElev {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "max elev");
-        job.setJarByClass(MaxElevclass);
+        job.setJarByClass(MaxElev.class);
         job.setMapperClass(MaxElevMapper.class);
         job.setReducerClass(MaxElevReducer.class);
         job.setNumReduceTasks(1);
