@@ -91,7 +91,7 @@ public class MaxElev {
             }
 
             IntArrayWritable value =
-                new IntArrayWritable(new int[]{maxStation, maxElev});
+                new IntArrayWritable(new int[]{maxStation, maxElev, maxLongitude});
             context.write(key, value);
         }
     }
