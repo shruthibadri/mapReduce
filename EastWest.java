@@ -49,8 +49,9 @@ public class EastWest {
         public void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
 
-            // XXX longtitude of highest station; this needs to be updated
-            int compare = 12345;
+            // station: 70640 elev: 9999 long: 3883
+            // longtitude of highest station
+            int compare = 3883;
             String line = value.toString();
 
             int station = Integer.parseInt(line.substring(4, 10));
