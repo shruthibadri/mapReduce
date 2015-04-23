@@ -85,6 +85,7 @@ public class EastWest {
             HashSet<Integer> seen = new HashSet<Integer>();
 
             for (IntArrayWritable value : values) {
+                IntWritable[] array = (IntWritable[])value.toArray();
                 int station = array[0].get();
                 int latitude = array[1].get();
                 seen.add(station);
@@ -100,7 +101,7 @@ public class EastWest {
             context.write(key, new IntWritable(seen.size()));
 
             // Write northenmost station info
-            if (key == 1) {
+            if (intkey == 1) {
                 context.write(new IntWritable(2), new IntWritable(maxStation));
                 context.write(new IntWritable(3), new IntWritable(maxLat));
             }
@@ -114,6 +115,8 @@ public class EastWest {
         job.setMapperClass(EastWestMapper.class);
         job.setReducerClass(EastWestReducer.class);
         job.setNumReduceTasks(2);
+        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputValueClass(IntArrayWritable.class);
         job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
